@@ -13,10 +13,10 @@ public class PlayerManager : MonoBehaviour
         anim = GetComponentInChildren<Animator>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         inputHandler.isInteracting = anim.GetBool("isInteracting");
         inputHandler.rollFlag = false;
+        inputHandler.sprintFlag = false;
     }
 }
