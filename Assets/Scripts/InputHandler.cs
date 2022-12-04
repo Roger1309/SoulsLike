@@ -2,95 +2,105 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InputHandler : MonoBehaviour
+namespace SG
 {
-    public float horizontal;
-    public float vertical;
-    public float moveAmount;
-    public float mouseX;
-    public float mouseY;
-
-    public bool b_Input;
-
-    public bool rollFlag;
-    public bool sprintFlag;
-    public float rollInputTimer;
-    public bool isInteracting;
-
-    PlayerControls inputActions;
-    CameraHandler cameraHandler;
-
-
-    Vector2 movementInput;
-    Vector2 cameraInput;
-
-    private void Awake()
+    public class InputHandler : MonoBehaviour
     {
-        cameraHandler = CameraHandler.singleton;
-    }
+        public float horizontal;
+        public float vertical;
+        public float moveAmount;
+        public float mouseX;
+        public float mouseY;
 
-    private void FixedUpdate()
-    {
-        float delta = Time.fixedDeltaTime;
+        public bool b_Input;
+        public bool rb_Input;
+        public bool rt_Input;
 
-        if (cameraHandler != null)
-            {
-            cameraHandler.FollowTarget(delta);
-            cameraHandler.HandleCameraRotation(delta, mouseX, mouseY);
-            }
-    }
+        public bool rollFlag;
+        public bool sprintFlag;
+        public float rollInputTimer;
 
-    public void OnEnable()
-    {
-        if (inputActions == null)
+        PlayerControls inputActions;
+        PlayerAttacker playerAttacker;
+        PlayerInventory playerInventory;
+
+        Vector2 movementInput;
+        Vector2 cameraInput;
+
+        private void Awake()
         {
-            inputActions = new PlayerControls();
-            inputActions.PlayerMovement.Movement.performed += inputActions => movementInput = inputActions.ReadValue<Vector2>();
-            inputActions.PlayerMovement.Camera.performed += i => cameraInput = i.ReadValue<Vector2>();
+            playerAttacker = GetComponent<PlayerAttacker>();
+            playerInventory = GetComponent<PlayerInventory>();
         }
 
-        inputActions.Enable();
-    }
-
-    private void OnDisable()
-    {
-        inputActions.Disable();
-    }
-
-    public void TickInput(float delta)
-    {
-        MoveInput(delta);
-        HandleRollInput(delta);
-    }
-
-    private void MoveInput(float delta)
-    {
-        horizontal = movementInput.x;
-        vertical = movementInput.y;
-        moveAmount = Mathf.Clamp01(Mathf.Abs(horizontal) + Mathf.Abs(vertical));
-        mouseX = cameraInput.x;
-        mouseY = cameraInput.y;
-    }
-
-    private void HandleRollInput(float delta)
-    {
-        b_Input = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Started;
-
-        if (b_Input)
+        public void OnEnable()
         {
-            rollInputTimer += delta;
-            sprintFlag = true;
-        }
-        else
-        {
-            if (rollInputTimer > 0 && rollInputTimer < 0.5f)
+            if (inputActions == null)
             {
-                sprintFlag = false;
-                rollFlag = true;
+                inputActions = new PlayerControls();
+                inputActions.PlayerMovement.Movement.performed += inputActions => movementInput = inputActions.ReadValue<Vector2>();
+                inputActions.PlayerMovement.Camera.performed += i => cameraInput = i.ReadValue<Vector2>();
             }
 
-            rollInputTimer = 0;
+            inputActions.Enable();
+        }
 
+        private void OnDisable()
+        {
+            inputActions.Disable();
+        }
+
+        public void TickInput(float delta)
+        {
+            MoveInput(delta);
+            HandleRollInput(delta);
+            HandleAttackInput(delta);
+        }
+
+        private void MoveInput(float delta)
+        {
+            horizontal = movementInput.x;
+            vertical = movementInput.y;
+            moveAmount = Mathf.Clamp01(Mathf.Abs(horizontal) + Mathf.Abs(vertical));
+            mouseX = cameraInput.x;
+            mouseY = cameraInput.y;
+        }
+
+        private void HandleRollInput(float delta)
+        {
+            b_Input = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Started;
+
+            if (b_Input)
+            {
+                rollInputTimer += delta;
+                sprintFlag = true;
+            }
+            else
+            {
+                if (rollInputTimer > 0 && rollInputTimer < 0.5f)
+                {
+                    sprintFlag = false;
+                    rollFlag = true;
+                }
+
+                rollInputTimer = 0;
+            }
+        }
+
+        private void HandleAttackInput(float delta)
+        {
+            inputActions.PlayerActions.RB.performed += i => rb_Input = true;
+            inputActions.PlayerActions.RT.performed += i => rt_Input = true;
+
+            if (rb_Input)
+            {
+                playerAttacker.HandleLightAttack(playerInventory.rightWeapon);
+            }
+
+            if (rt_Input)
+            {
+                playerAttacker.HandleHeavyAttack(playerInventory.rightWeapon);
+            }
         }
     }
 }

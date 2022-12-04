@@ -97,7 +97,7 @@ namespace SG
 
             float speed = movementSpeed;
 
-            if (inputHandler.sprintFlag)
+            if (inputHandler.sprintFlag && inputHandler.moveAmount > 0.5)
             {
                 speed = sprintSpeed;
                 playerManager.isSprinting = true;
@@ -108,10 +108,12 @@ namespace SG
                 if (inputHandler.moveAmount < 0.5)
                 {
                     moveDirection *= walkingSpeed;
+                    playerManager.isSprinting = false;
                 }
                 else
                 {
                     moveDirection *= speed;
+                    playerManager.isSprinting = false;
                 }
             }
 
